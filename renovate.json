@@ -1,0 +1,11 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "packageRules": [
+    {
+      "description": "The Twenty SDK ships breaking minors often. Upgrade these three by hand, together, and re-test on a throwaway Twenty (spec §0).",
+      "matchPackageNames": ["twenty-sdk", "twenty-client-sdk", "twenty-ui"],
+      "enabled": false
+    }
+  ]
+}

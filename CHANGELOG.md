@@ -1,7 +1,8 @@
 # Changelog
 
-All notable changes to this application are documented in this file.
-
 ## 0.1.0
 
-- Initial application scaffolded with [`create-twenty-app`](https://www.npmjs.com/package/create-twenty-app)
+- Orakel fields on Company (`orakel*`, one per Orakel catalog field, plus `orakelDoNotEnrich`).
+- Settings: API key (secret), Orakel URL, fields to fill in, card fields to hide, website sharing.
+- Health check: key missing / key invalid / trial expired.
+- Saved view "Orakel: no match".

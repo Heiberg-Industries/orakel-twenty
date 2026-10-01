@@ -1,34 +1,42 @@
-# My Twenty App
+# Orakel for Twenty
 
-Describe your app in one or two sentences.
+Nordic company data from [Orakel](https://orakel.cloud) on every company in your Twenty CRM: registry facts
+(org number, legal form, industry, employees), the latest accounts, key people, ownership and public tenders.
 
-## Features
+## What it does today (v0.1)
 
-List the top things your app does, for example:
+- Adds the Orakel fields to **Company**, all prefixed `orakel` (for example *Org number*, *Revenue*, *CEO name*).
+  The app fills them; you can set *Org number* and *Do not enrich* yourself.
+- Adds a saved view, **Orakel: no match**, listing companies without an org number.
+- Checks your Orakel key on the app's settings page and tells you if it is missing, invalid, or on an expired trial.
 
-- Feature one
-- Feature two
-- Feature three
+Automatic enrichment and the company card come in the next releases.
 
-## Getting started
+## Settings
 
-Setup instructions live in [SETUP.md](SETUP.md).
+| Setting | What it does |
+|---|---|
+| Orakel API key | Your own key from orakel.cloud. Stored encrypted; only the app's server code reads it. |
+| Orakel URL | Leave as `https://orakel.cloud`. |
+| Fields to fill in | Which Orakel fields are written. Org number is always written. |
+| Hide on the company card | Leave address, municipality or phone off the card. |
+| Share company websites with Orakel | Sends matched websites to Orakel for review. On by default. |
 
-## Publishing
+## Before you install
 
-The `Publish` workflow (`.github/workflows/publish.yml`) publishes the app to npm with provenance using [npm trusted publishing](https://docs.npmjs.com/trusted-publishers). To publish:
+- **Twenty 2.42 or newer.**
+- **Self-hosted Twenty:** apps only run with `LOGIC_FUNCTION_TYPE=LOCAL`. In that mode app code runs inside your
+  Twenty server and can read its environment (database URL, secrets). Install only apps you trust.
+- **Uninstalling deletes data.** Removing the app permanently deletes every Orakel field it added, including org
+  numbers. Orakel can re-match most companies after a reinstall, but org numbers you typed in by hand are lost.
 
-1. On npmjs.com register this repository as a trusted publisher of your package, pointing at the `publish.yml` workflow.
-2. Bump the version in `package.json`, then push a version tag (e.g. `git tag v1.0.0 && git push --tags`) or run the workflow manually from the Actions tab.
+## Development
 
-Publishing with provenance is also how you prove ownership when claiming your app in a Twenty marketplace.
+See [SETUP.md](SETUP.md). Rules for this repo:
 
-## Changelog
+- `twenty-sdk`, `twenty-client-sdk` and `twenty-ui` stay pinned at exactly `2.42.0` and are upgraded by hand.
+- No runtime `dependencies`. Everything goes in `devDependencies`; the build bundles it into each function.
+  A runtime dependency makes self-hosted Twenty download packages from npm on first use and after every restart.
+- Test on a throwaway local Twenty, never on a customer workspace.
 
-Notable changes are documented in [CHANGELOG.md](CHANGELOG.md).
-
-## Learn more
-
-- [Twenty Apps documentation](https://docs.twenty.com/developers/extend/apps/getting-started/quick-start)
-- [twenty-sdk CLI reference](https://www.npmjs.com/package/twenty-sdk)
-- [Discord](https://discord.gg/cx5n4Jzs57)
+MIT licensed.

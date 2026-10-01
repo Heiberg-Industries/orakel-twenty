@@ -1,47 +1,30 @@
 # Setup
 
-Follow these steps to get your app running locally.
-
 ## Prerequisites
 
-- Node.js (version specified in `.nvmrc`)
-- Yarn 4
-- Docker (to run the local Twenty server)
+- Node.js (version in `.nvmrc`), Yarn 4 (`corepack enable`), Docker.
 
-## Steps
+## Checks
 
-1. Install dependencies:
+```bash
+yarn install
+yarn lint
+yarn typecheck
+yarn test      # unit tests, no server needed
+yarn build     # builds the manifest and functions into .twenty/output
+```
 
-   ```bash
-   yarn install
-   ```
+## Try it on a throwaway local Twenty
 
-   The committed `yarn.lock` pins exact, integrity-checked versions, so this
-   resolves nothing from the registry.
+Use the same Twenty version as production (`twentycrm/twenty:v2.42.6`, `LOGIC_FUNCTION_TYPE=LOCAL`), not
+`yarn twenty docker:start` (that starts the latest dev image). Heiberg's recipe:
+orbis `docs/solutions/2026-10-01-test-a-twenty-app-on-a-throwaway-local-twenty.md`.
 
-2. Start the local Twenty server:
+```bash
+yarn twenty remote:add --url http://localhost:3000 --api-key "$TOKEN" --as local
+yarn twenty remote:use local
+yarn twenty app:publish --private
+yarn twenty app:install
+```
 
-   ```bash
-   yarn twenty docker:start
-   ```
-
-   Check the server status at any time with `yarn twenty docker:status`.
-
-3. Start the development server and sync your app:
-
-   ```bash
-   yarn twenty dev
-   ```
-
-4. Open [http://localhost:2020](http://localhost:2020) and log in with the default development credentials: `tim@apple.dev` / `tim@apple.dev`.
-
-## Verifying your setup
-
-- `yarn lint` - Lint the project with oxlint
-- `yarn typecheck` - Type-check the project
-- `yarn test:unit` - Run unit tests
-- `yarn test` - Run integration tests
-
-## Troubleshooting
-
-See the [troubleshooting guide](https://docs.twenty.com/developers/extend/apps/getting-started/troubleshooting) or ask on [Discord](https://discord.gg/cx5n4Jzs57).
+Bump `version` in `package.json` to publish an upgrade. Tear down with `yarn twenty app:uninstall -y`.
