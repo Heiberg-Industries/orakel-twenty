@@ -5,7 +5,7 @@ import type { OrakelSettings } from 'src/catalog/settings';
 // What Orakel says about a key, as the app's settings page should show it.
 //
 // Probe: `GET /api/keys/usage`. It runs Orakel's full key check (`requireApiKey`) and is not
-// billed or logged as usage. Contract read from orakel `lib/auth.ts` @ 62943358 (observation,
+// billed or logged as usage. Contract read from Orakel's API key check, 2026-10-01 (observation,
 // not a documented API):
 //   401 {error: "Missing API key" | "Invalid API key"}         unknown, revoked or expired-OAuth key
 //   402 {error, code: "trial_expired" | <other>, upgradeUrl}   trial over / payment access missing

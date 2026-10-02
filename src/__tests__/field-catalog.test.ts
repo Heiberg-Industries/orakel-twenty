@@ -11,8 +11,7 @@ import {
 import { DEFAULT_FIELD_SELECTION, ORAKEL_FIELD_OPTIONS } from 'src/catalog/settings';
 import appConfig from 'src/application-config';
 
-// The app must declare exactly Orakel's catalog on Company (orakel `lib/crm/fields.ts` CRM_FIELDS,
-// snapshot in `orakel-crm-fields.snapshot.ts` — refresh it there), plus the `doNotEnrich` control field.
+// The app must declare exactly Orakel's catalog on Company (snapshot in `orakel-crm-fields.snapshot.ts` — refresh it there), plus the `doNotEnrich` control field.
 
 const CONTROL_SLUGS = ['doNotEnrich'];
 const catalogSlugs = ORAKEL_CRM_FIELDS.map((field) => field.slug);

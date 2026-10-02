@@ -1,7 +1,7 @@
 import { ORAKEL_CRM_FIELDS, ORAKEL_DEFAULT_FIELD_SELECTION } from 'src/catalog/orakel-crm-fields.snapshot';
 
-// Application variables (spec §2.3). Twenty hands every variable to logic functions as a
-// string in `process.env`; MULTI_SELECT and BOOLEAN arrive JSON-encoded (spec §9 #5).
+// Application variables. Twenty hands every variable to logic functions as a
+// string in `process.env`; MULTI_SELECT and BOOLEAN arrive JSON-encoded.
 
 export const DEFAULT_ORAKEL_BASE_URL = 'https://orakel.cloud';
 

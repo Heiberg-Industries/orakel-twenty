@@ -71,9 +71,9 @@ This helps automatically generate required IDs etc.
 
 ## This repo (Orakel for Twenty)
 
-- Spec: orbis `docs/superpowers/specs/2026-10-01-orakel-for-twenty-app.md` (§2, §9). Tickets: Linear ORA, project "Orakel for Twenty".
 - `twenty-sdk`, `twenty-client-sdk`, `twenty-ui` pinned to exactly 2.42.0. Never bump them automatically.
-- No runtime `dependencies` in `package.json` (spec §9 #3). Everything in `devDependencies`.
+- No runtime `dependencies` in `package.json`. Everything in `devDependencies`: the build bundles it, and a runtime
+  dependency makes self-hosted Twenty (LOCAL mode) install from npm on first use and after every restart.
 - The Company fields come from `src/catalog/company-fields.ts`; each `src/fields/*.field.ts` file is one line.
-  When Orakel's catalog changes, refresh `src/catalog/orakel-crm-fields.snapshot.ts` first; `yarn test` says what else to change.
-- Test on a throwaway local Twenty 2.42.6, never on crm.heiberg.co (orbis `docs/solutions/2026-10-01-test-a-twenty-app-on-a-throwaway-local-twenty.md`).
+  When Orakel's field catalog changes, refresh `src/catalog/orakel-crm-fields.snapshot.ts` first; `yarn test` says what else to change.
+- Test on a throwaway local Twenty 2.42.6 (see SETUP.md), never on a real customer workspace.

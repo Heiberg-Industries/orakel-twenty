@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { checkOrakelKey } from 'src/catalog/orakel-key-status';
 
-// Response bodies are shaped from orakel `lib/auth.ts` @ 62943358 (requireApiKey), not recorded.
+// Response bodies are shaped from Orakel's API key check (2026-10-01), not recorded.
 const respond = (status: number, body: unknown = {}) =>
   vi.fn(async () => ({ status, json: async () => body }));
 

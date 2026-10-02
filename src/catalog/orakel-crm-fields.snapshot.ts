@@ -1,11 +1,9 @@
 // Snapshot of Orakel's CRM field catalog — the list the app mirrors on Company.
 //
-// Copied verbatim (slug, label, category, countries) from orakel
-// `lib/crm/fields.ts` `CRM_FIELDS` and `DEFAULT_FIELD_SELECTION`, origin/main @ 62943358, 2026-10-01.
+// Copied verbatim (slug, label, category, countries) from Orakel's CRM field catalog and its default
+// field selection, as of 2026-10-01.
 //
-// REFRESH when Orakel adds, removes or renames a catalog field:
-//   git -C ~/Developer/orakel show origin/main:lib/crm/fields.ts
-// then update this file, add or remove the matching entry in `company-fields.ts`, and run
+// REFRESH when Orakel adds, removes or renames a catalog field: update this file from Orakel's catalog, add or remove the matching entry in `company-fields.ts`, and run
 // `yarn test:unit` — `field-catalog.test.ts` fails until the two agree.
 
 export type OrakelCrmField = {

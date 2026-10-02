@@ -10,9 +10,9 @@ import {
 //
 // Naming: `orakel` + the slug in PascalCase. The prefix keeps the app's fields apart from
 // fields created by hand or by the old provisioning script: an app cannot take over a field
-// that already exists under the same name (spec §0).
+// that already exists under the same name.
 //
-// Uninstalling the app permanently deletes all of these fields and their values (spec §9 #1).
+// Uninstalling the app permanently deletes all of these fields and their values.
 
 type OrakelFieldType = FieldType.TEXT | FieldType.NUMBER | FieldType.BOOLEAN;
 

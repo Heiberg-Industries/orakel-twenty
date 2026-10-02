@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_FIELD_SELECTION, readOrakelSettings } from 'src/catalog/settings';
 
 // Variable values arrive in process.env as strings; MULTI_SELECT as a JSON array string.
-// Shape verified on Twenty 2.42.6 by ORA-114 (spec §9 #5): '["orgForm","revenue"]'.
+// Shape verified live on Twenty 2.42.6 (2026-10-01): '["orgForm","revenue"]'.
 
 describe('readOrakelSettings', () => {
   it('parses MULTI_SELECT values from JSON strings', () => {

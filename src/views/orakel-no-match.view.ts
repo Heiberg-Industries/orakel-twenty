@@ -10,8 +10,8 @@ import {
   NO_MATCH_VIEW_UNIVERSAL_IDENTIFIER,
 } from 'src/constants/universal-identifiers';
 
-// Companies Orakel has not matched yet (no org number). Replaces orakel's
-// `lib/twenty/unmatched-report.ts`; the per-company suggestions live in the widget (ORA-119).
+// Companies Orakel has not matched yet (no org number). Per-company match suggestions belong in the
+// company card.
 const company = STANDARD_OBJECT.company;
 const orgNumberField = getCompanyFieldEntry('orgNumber').universalIdentifier;
 
