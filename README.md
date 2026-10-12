@@ -9,8 +9,14 @@ Nordic company data from [Orakel](https://orakel.cloud) on every company in your
   The app fills them; you can set *Org number* and *Do not enrich* yourself.
 - Adds a saved view, **Orakel: no match**, listing companies without an org number.
 - Checks your Orakel key on the app's settings page and tells you if it is missing, invalid, or on an expired trial.
+- **Fills the fields on its own.** When a company is created, or gets an org number or a new domain, the app
+  fetches it from Orakel (or matches it by name and domain; only a near-certain match is written) and fills the
+  selected fields. Built-in fields (domain, address, LinkedIn, employees) are filled only when empty, and nothing
+  you entered yourself is changed or cleared. Tick *Do not enrich* on a company to leave it alone.
+- **Enrich all companies**: a command on the Companies list fills every existing company, and a weekly run keeps
+  them current. Progress and counts are in the `enrich-all` function's logs.
 
-Automatic enrichment and the company card come in the next releases.
+The company card comes in the next release.
 
 ## Settings
 
