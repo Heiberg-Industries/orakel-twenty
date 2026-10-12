@@ -16,7 +16,10 @@ Nordic company data from [Orakel](https://orakel.cloud) on every company in your
 - **Enrich all companies**: a command on the Companies list fills every existing company, and a weekly run keeps
   them current. Progress and counts are in the `enrich-all` function's logs.
 
-The company card comes in the next release.
+- **Orakel card on each company page** (Home tab): Overview and Financials from Orakel, the 5-year accounts on
+  request, and a Refresh button in the card header. A company without an org number shows up to three
+  suggestions; click *Use this* on the right one. If Twenty and Orakel have different websites, the card asks
+  which is right and can send Twenty's to Orakel for review.
 
 ## Settings
 
