@@ -39,7 +39,9 @@ import {
   RESOLVE_DOMAIN_FUNCTION_UNIVERSAL_IDENTIFIER,
   SET_ORG_NUMBER_FUNCTION_UNIVERSAL_IDENTIFIER,
 } from '../../src/constants/universal-identifiers';
+import { DEFAULT_FIELD_SELECTION } from '../../src/catalog/settings';
 import { buttonState } from '../../src/enrichment/enrich-all';
+import { buildEnrichmentValues } from '../../src/enrichment/orakel-values';
 import { AUTO_WRITE_CONFIDENCE, createOrakelApi, type MatchCandidate } from '../../src/enrichment/orakel-api';
 import { describeSummary, type RunSummary } from '../../src/enrichment/run';
 import type { AddPersonResult, CardState } from '../../src/widget/card-types';
@@ -266,6 +268,32 @@ const filledAppFields = (record: CompanyRow | undefined) =>
     .filter(([key, value]) => key.startsWith('orakel') && !OWN_FIELDS.has(key) && value !== null && value !== '')
     .map(([key]) => key);
 
+// Every selected field holds exactly what Orakel has for this company. The sweep assumes the default field
+// selection (README); the two tender fields are not in it. Without ORAKEL_API_KEY there is nothing to compare to.
+const checkFieldValues = async (name: string, record: CompanyRow) => {
+  if (!orakelSettings.apiKey) {
+    row('SKIP', name, 'set ORAKEL_API_KEY to compare the values with Orakel');
+    return;
+  }
+  const company = await createOrakelApi(orakelSettings).getCompany(orgOf(record));
+  if (!company) {
+    check(false, name, `Orakel does not know ${orgOf(record)}`);
+    return;
+  }
+  const expected = buildEnrichmentValues(company, DEFAULT_FIELD_SELECTION);
+  const wrong = Object.entries(expected)
+    .filter(([slug, value]) => {
+      const actual = record[orakelFieldName(slug)];
+      return typeof value === 'number' ? Number(actual) !== value : actual !== value;
+    })
+    .map(([slug, value]) => `${slug}: Twenty ${short(record[orakelFieldName(slug)])}, Orakel ${short(value)}`);
+  check(
+    Object.keys(expected).length > 0 && wrong.length === 0,
+    name,
+    wrong.length ? wrong.join('; ') : `${Object.keys(expected).join(', ')} match Orakel`,
+  );
+};
+
 const waitFor = async <T,>(read: () => Promise<T>, done: (value: T) => boolean, timeoutMs: number) => {
   const deadline = Date.now() + timeoutMs;
   let value = await read();
@@ -402,8 +430,7 @@ const partB = async () => {
       );
     }
     if (written) {
-      const filled = filledAppFields(records.get(id));
-      check(filled.length > 0, `B enrich-on-create ${fixture.key} fills the selected fields`, filled.join(', ') || 'none filled');
+      await checkFieldValues(`B enrich-on-create ${fixture.key} fills the selected fields with Orakel's values`, records.get(id)!);
     }
   }
 
@@ -442,12 +469,10 @@ const partB = async () => {
 
     const reply = await route('POST', '/orakel/set-org-number', { companyId: useThisId, orgNumber: useThis.expectOrg });
     check(reply.body?.ok === true, `B "Use this" sets ${useThis.expectOrg}`, `HTTP ${reply.status} ${short(reply.body)}`);
+    // The fields are written in one update, so the first one filled means the write has landed.
     const after = await waitFor(() => readCompany(useThisId), (record) => filledAppFields(record).length > 0, AUTO_MATCH_TIMEOUT_MS);
-    check(
-      orgOf(after) === useThis.expectOrg && filledAppFields(after).length > 0,
-      'B enrich-on-change fills the fields after "Use this"',
-      filledAppFields(after).join(', ') || 'none filled',
-    );
+    check(orgOf(after) === useThis.expectOrg, `B "Use this" keeps ${useThis.expectOrg}`, `has ${orgOf(after) || 'nothing'}`);
+    await checkFieldValues('B enrich-on-change fills the fields after "Use this" with Orakel\'s values', after);
     // The app's own write must not trigger it again (docs/solutions/2026-10-12-enrich-on-change-loop-guard.md).
     await sleep(5_000);
     const before = (await readCompany(useThisId)).updatedAt;
