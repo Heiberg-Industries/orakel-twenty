@@ -21,6 +21,10 @@
   adds a note "Added from Orakel: <source>, <date>". It only creates people Orakel's card lists right now, so a
   suppressed person can't be created. "Find contacts" in the card header (`contacts`) opens a side panel with the
   website's emails and phones, each email with "+ Add", and a "No website" state.
+- Live acceptance sweep ([ORA-124](https://linear.app/heiberg-industries/issue/ORA-124), [#6](https://github.com/Heiberg-Industries/orakel-twenty/pull/6)):
+  `yarn tsx tests/live/app.live.mts` runs every logic function against a real Twenty and the real Orakel, checks
+  that wrong or ambiguous matches are never written and real ones are at least suggested, and covers revoked and
+  expired-trial keys. Run by hand, never in `yarn test`. Adds `tsx` as a dev dependency.
 
 ## 0.1.0
 

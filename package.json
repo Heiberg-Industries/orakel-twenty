@@ -31,6 +31,7 @@
     "oxlint": "^0.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "tsx": "^4.21.0",
     "twenty-client-sdk": "2.42.0",
     "twenty-sdk": "2.42.0",
     "twenty-ui": "2.42.0",

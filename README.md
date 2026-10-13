@@ -54,4 +54,30 @@ See [SETUP.md](SETUP.md). Rules for this repo:
   A runtime dependency makes self-hosted Twenty download packages from npm on first use and after every restart.
 - Test on a throwaway local Twenty, never on a customer workspace.
 
+### Live acceptance sweep
+
+`yarn test` only checks what we believe Twenty and Orakel do. The live sweep checks it against the real systems
+and is the acceptance bar. It is never part of `yarn test`: it creates and deletes companies and people, and every
+Orakel call is billed.
+
+```bash
+ORAKEL_API_KEY=orakel_… TWENTY_URL=http://localhost:3000 TWENTY_API_KEY=… yarn tsx tests/live/app.live.mts
+```
+
+- Run it against a throwaway Twenty with the app installed (see [SETUP.md](SETUP.md)), the same Orakel key in the
+  app's settings and the default field selection. It takes about ten minutes.
+- **Part A** asks Orakel directly, using the app's own code: the health check for each kind of key, the card's
+  upgrade and key-problem states, and the match for each test company in `tests/live/app.fixtures.mts`.
+- **Part B** works inside Twenty: it creates the test companies, waits for the app to match them, then calls every
+  function (card, Use this, refresh, 5-year history, website review, Find contacts, + Add, enrich all, weekly run,
+  health check) and removes what it created (`SWEEP_KEEP=1` keeps it).
+- **Both directions:** a wrong or ambiguous match is never written on its own (too eager), and a real company is at
+  least suggested (too strict).
+- **Key problems:** set `ORAKEL_REVOKED_KEY` and `ORAKEL_EXPIRED_TRIAL_KEY` for Part A. To check the workspace
+  itself, put a revoked or expired-trial key in the app's settings and run with
+  `SWEEP_WORKSPACE_KEY_STATE=revoked` (or `expired-trial`): the health check must go red and the card must show the
+  upgrade or key message, not a blank widget.
+- Other options are listed at the top of the script. Each row prints `PASS`, `FAIL` or `SKIP`; any `SKIP` means it
+  was not a full acceptance run. Paste the output into the ticket.
+
 MIT licensed.
