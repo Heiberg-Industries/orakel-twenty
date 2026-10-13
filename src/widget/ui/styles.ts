@@ -73,6 +73,22 @@ export const styles = {
     borderRadius: 4,
     minWidth: 0,
   },
+  personRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    minWidth: 0,
+  },
+  duplicateBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    padding: '6px 8px',
+    border: `1px solid ${colors.border}`,
+    borderRadius: 4,
+    background: colors.backgroundSecondary,
+  },
   table: {
     width: '100%',
     borderCollapse: 'collapse',

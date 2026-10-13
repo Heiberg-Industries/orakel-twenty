@@ -15,6 +15,12 @@
   opted out, no key, key problems, not in Orakel, usage limit and payment required (with the upgrade link).
   Refresh in the card header re-enriches the company. Routes: `card`, `set-org-number`, `financial-history`,
   `resolve-domain`, `refresh`.
+- People tab and Find contacts ([ORA-120](https://linear.app/heiberg-industries/issue/ORA-120)): CEO, board chair
+  and members, active tenders and tech stack. "+ Add" (`add-person`, as the person who clicked) checks Twenty for
+  the same email, then the same name, offers "Open" / "Create anyway", creates a Person linked to the company and
+  adds a note "Added from Orakel: <source>, <date>". It only creates people Orakel's card lists right now, so a
+  suppressed person can't be created. "Find contacts" in the card header (`contacts`) opens a side panel with the
+  website's emails and phones, each email with "+ Add", and a "No website" state.
 
 ## 0.1.0
 

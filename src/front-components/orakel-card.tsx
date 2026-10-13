@@ -9,16 +9,23 @@ import type { CardState } from 'src/widget/card-types';
 import { FinancialsTab } from 'src/widget/ui/FinancialsTab';
 import { MatchSuggestions } from 'src/widget/ui/MatchSuggestions';
 import { OverviewTab } from 'src/widget/ui/OverviewTab';
+import { PeopleTab } from 'src/widget/ui/PeopleTab';
 import { styles } from 'src/widget/ui/styles';
 import { errorMessage, fetchCard } from 'src/widget/ui/widget-api';
 
 // The Orakel card on the Company page: a port of the HubSpot card (orakel
-// `hubspot-extension/src/app/cards/OrakelCard.jsx`) with its Overview and Financials tabs.
+// `hubspot-extension/src/app/cards/OrakelCard.jsx`) with its Overview, Financials and People tabs.
 // Everything Orakel-related goes through the app's logic functions; this component holds no key.
 
 type LoadState = { status: 'loading' } | { status: 'loaded'; card: CardState } | { status: 'failed'; message: string };
 
-type Tab = 'overview' | 'financials';
+type Tab = 'overview' | 'financials' | 'people';
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'financials', label: 'Financials' },
+  { id: 'people', label: 'People' },
+];
 
 const openAppSettings = () => navigate(AppPath.SettingsCatchAll, { '*': 'applications' });
 
@@ -168,12 +175,11 @@ const OrakelCard = () => {
         return (
           <>
             <div style={styles.tabBar} role="tablist">
-              <button type="button" role="tab" aria-selected={tab === 'overview'} style={styles.tab(tab === 'overview')} onClick={() => setTab('overview')}>
-                Overview
-              </button>
-              <button type="button" role="tab" aria-selected={tab === 'financials'} style={styles.tab(tab === 'financials')} onClick={() => setTab('financials')}>
-                Financials
-              </button>
+              {TABS.map(({ id, label }) => (
+                <button key={id} type="button" role="tab" aria-selected={tab === id} style={styles.tab(tab === id)} onClick={() => setTab(id)}>
+                  {label}
+                </button>
+              ))}
             </div>
             {tab === 'overview' ? (
               <OverviewTab
@@ -184,8 +190,10 @@ const OrakelCard = () => {
                 orakelDomain={card.orakelDomain}
                 crmDomain={card.crmDomain}
               />
-            ) : (
+            ) : tab === 'financials' ? (
               <FinancialsTab companyId={companyId} card={card.card} onHistoryLoaded={() => void reload()} />
+            ) : (
+              <PeopleTab key={card.card.overview.orgNumber} companyId={companyId} intelligence={card.card.intelligence} />
             )}
           </>
         );
@@ -198,6 +206,6 @@ const OrakelCard = () => {
 export default defineFrontComponent({
   universalIdentifier: CARD_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,
   name: 'orakel-card',
-  description: 'Orakel company card: overview, financials and match suggestions.',
+  description: 'Orakel company card: overview, financials, people and match suggestions.',
   component: OrakelCard,
 });

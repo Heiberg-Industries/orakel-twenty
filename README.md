@@ -20,6 +20,12 @@ Nordic company data from [Orakel](https://orakel.cloud) on every company in your
   request, and a Refresh button in the card header. A company without an org number shows up to three
   suggestions; click *Use this* on the right one. If Twenty and Orakel have different websites, the card asks
   which is right and can send Twenty's to Orakel for review.
+- **People tab** on the card: the CEO, board chair and board members, active public tenders and the website's tech
+  stack. *+ Add* creates the person in Twenty, linked to the company. It first looks for the same email, then the
+  same name, and offers *Open* or *Create anyway*. Each person added this way gets a note "Added from Orakel:
+  <source>, <date>". People who asked Orakel to hide them are never shown and can't be added.
+- **Find contacts** in the card header (Norwegian companies): reads the company's own website once, when you click,
+  and lists the email addresses and phone numbers on it, each address with *+ Add*.
 
 ## Settings
 
