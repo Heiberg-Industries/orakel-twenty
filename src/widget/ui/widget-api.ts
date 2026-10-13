@@ -1,7 +1,10 @@
 import { RestApiClient, RestApiClientError } from 'twenty-client-sdk/rest';
 
 import type {
+  AddPersonRequest,
+  AddPersonResult,
   CardState,
+  ContactsResult,
   FinancialHistoryResult,
   ResolveDomainResult,
   SetOrgNumberResult,
@@ -30,6 +33,11 @@ export const setOrgNumber = (companyId: string, orgNumber: string) =>
 
 export const requestFinancialHistory = (companyId: string) =>
   client().post<FinancialHistoryResult>('/s/orakel/financial-history', { companyId });
+
+export const findContacts = (companyId: string) =>
+  client().post<ContactsResult>('/s/orakel/contacts', { companyId });
+
+export const addPerson = (request: AddPersonRequest) => client().post<AddPersonResult>('/s/orakel/add-person', request);
 
 export const proposeCrmWebsite = (companyId: string) =>
   client().post<ResolveDomainResult>('/s/orakel/resolve-domain', { companyId });

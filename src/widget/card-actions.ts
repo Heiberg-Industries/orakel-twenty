@@ -1,11 +1,16 @@
 import type { OrakelSettings } from 'src/catalog/settings';
 import { normalizeDomain } from 'src/enrichment/enrich-company';
 import { detectCountry } from 'src/enrichment/orakel-api';
-import type { FinancialHistoryResult, ResolveDomainResult } from 'src/widget/card-types';
+import type {
+  ContactsResult,
+  FinancialHistoryResult,
+  OrakelContacts,
+  ResolveDomainResult,
+} from 'src/widget/card-types';
 import { callOrakel, type OrakelFailure, type OrakelFetch } from 'src/widget/orakel-client';
 import type { TwentyCompany } from 'src/widget/twenty-company';
 
-// The widget's two Orakel actions besides the card itself. Both act on the company record as read
+// The widget's Orakel actions besides the card itself. Each acts on the company record as read
 // by the person who clicked, never on values the widget sends, so nobody can act on a company they
 // can't see.
 
@@ -14,7 +19,7 @@ import type { TwentyCompany } from 'src/widget/twenty-company';
 // sets no timeout of its own and Twenty adds none to an app route (spec §9 #9), so this waits for it.
 export const FINANCIAL_HISTORY_TIMEOUT_MS = 170_000;
 
-const failureMessage = (failure: OrakelFailure): string => {
+export const orakelFailureMessage = (failure: OrakelFailure): string => {
   switch (failure.kind) {
     case 'no-key':
       return 'No Orakel API key is set for this workspace.';
@@ -55,7 +60,7 @@ export const fetchFinancialHistory = async (
     fetchImpl,
   );
   if (!result.ok) {
-    return { ok: false, message: failureMessage(result) };
+    return { ok: false, message: orakelFailureMessage(result) };
   }
 
   const years = result.data.syncResult?.years;
@@ -94,8 +99,56 @@ export const proposeCrmDomain = async (
     fetchImpl,
   );
   if (!result.ok) {
-    return { ok: false, message: failureMessage(result) };
+    return { ok: false, message: orakelFailureMessage(result) };
   }
 
   return { ok: true, queued: result.data.queued === true };
+};
+
+// Find contacts in the card's header: Orakel scrapes the company's own website once, on this click,
+// and never in bulk (spec §7 #3). Orakel takes Norwegian org numbers only and allows 20 such calls
+// per account per 15 minutes (429, shown as written).
+export const CONTACTS_TIMEOUT_MS = 60_000;
+
+export const findContacts = async (
+  company: TwentyCompany,
+  settings: OrakelSettings,
+  fetchImpl?: OrakelFetch,
+): Promise<ContactsResult> => {
+  if (company.doNotEnrich) {
+    return { ok: false, message: 'Orakel is turned off for this company ("Do not enrich").' };
+  }
+  if (!company.orgNumber) {
+    return { ok: false, message: 'This company has no org number yet.' };
+  }
+  if (detectCountry(company.orgNumber) !== 'NO') {
+    return { ok: false, message: 'Find contacts is only available for Norwegian companies.' };
+  }
+
+  const result = await callOrakel<Partial<OrakelContacts>>(
+    settings,
+    `/api/companies/${encodeURIComponent(company.orgNumber)}/contacts`,
+    { timeoutMs: CONTACTS_TIMEOUT_MS },
+    fetchImpl,
+  );
+  if (!result.ok) {
+    return {
+      ok: false,
+      message:
+        result.kind === 'unexpected' && result.status === 502
+          ? "Orakel could not read the company's website."
+          : orakelFailureMessage(result),
+    };
+  }
+
+  const strings = (value: unknown) =>
+    Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.trim() !== '') : [];
+  return {
+    ok: true,
+    contacts: {
+      emails: strings(result.data.emails),
+      phones: strings(result.data.phones),
+      noWebsite: result.data.noWebsite === true,
+    },
+  };
 };

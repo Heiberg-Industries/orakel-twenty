@@ -81,6 +81,28 @@ export type FinancialHistoryResult =
   | { ok: true; extractedYears: number }
   | { ok: false; message: string };
 
+// `GET /api/companies/{org}/contacts`: what Orakel found on the company's own website, scraped
+// once, on this click. Norwegian companies only; `noWebsite` when Orakel knows no website for it.
+export type OrakelContacts = { emails: string[]; phones: string[]; noWebsite?: boolean };
+
+export type ContactsResult = { ok: true; contacts: OrakelContacts } | { ok: false; message: string };
+
+// "+ Add" on the People tab (a registry role, by name) or in Find contacts (an email address).
+// `force` is "Create anyway" after a name match.
+export type AddPersonRequest =
+  | { companyId: string; name: string; force?: boolean }
+  | { companyId: string; email: string; force?: boolean };
+
+export type PersonMatch = { id: string; name: string };
+
+// `duplicates`: Twenty already has this person; nothing was created. A name match can be
+// overridden with `force`; an email match can't, because Twenty keeps email addresses unique.
+// `noteError`: the Person exists, but its source note could not be written.
+export type AddPersonResult =
+  | { ok: true; personId: string; noteError?: string }
+  | { ok: false; duplicates: PersonMatch[]; matchedBy: 'email' | 'name' }
+  | { ok: false; message: string };
+
 export type ResolveDomainResult =
   | { ok: true; queued: boolean; skipped?: 'sharing-off' | 'not-norwegian' }
   | { ok: false; message: string };
