@@ -284,6 +284,8 @@ const checkFieldValues = async (name: string, record: CompanyRow) => {
   const wrong = Object.entries(expected)
     .filter(([slug, value]) => {
       const actual = record[orakelFieldName(slug)];
+      // `Number(null)` and `Number('')` are 0: an empty field must not pass for an expected zero.
+      if (actual === null || actual === undefined || actual === '') return true;
       return typeof value === 'number' ? Number(actual) !== value : actual !== value;
     })
     .map(([slug, value]) => `${slug}: Twenty ${short(record[orakelFieldName(slug)])}, Orakel ${short(value)}`);
