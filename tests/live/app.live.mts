@@ -239,16 +239,26 @@ const createCompany = async (fields: Record<string, unknown>) => {
   return id;
 };
 
+// Throws unless every requested company came back: a read that failed must never look like "nothing written".
 const readCompanies = async (ids: string[]): Promise<Map<string, CompanyRow>> => {
   const filter = `id[in]:[${ids.map((id) => JSON.stringify(id)).join(',')}]`;
   const reply = await twenty('GET', `/rest/companies?limit=60&depth=0&filter=${encodeURIComponent(filter)}`);
-  const records: CompanyRow[] = reply.body?.data?.companies ?? [];
-  return new Map(records.map((record) => [record.id, record]));
+  const records: unknown = reply.body?.data?.companies;
+  if (reply.status >= 300 || !Array.isArray(records)) {
+    throw new Error(`read companies: HTTP ${reply.status} ${short(reply.body)}`);
+  }
+  const byId = new Map((records as CompanyRow[]).map((record) => [record.id, record]));
+  const missing = ids.filter((id) => !byId.has(id));
+  if (missing.length > 0) throw new Error(`read companies: Twenty did not return ${missing.join(', ')}`);
+  return byId;
 };
 
-const readCompany = async (id: string) => (await readCompanies([id])).get(id);
+const readCompany = async (id: string) => (await readCompanies([id])).get(id)!;
 
-const orgOf = (record: CompanyRow | undefined) => String(record?.[ORG_FIELD] ?? '').trim();
+const orgOf = (record: CompanyRow | undefined) => {
+  if (!record) throw new Error('company record missing');
+  return String(record[ORG_FIELD] ?? '').trim();
+};
 
 // Any `orakel*` field the app writes, filled: the fields came in, not only the org number.
 const filledAppFields = (record: CompanyRow | undefined) =>
@@ -440,10 +450,15 @@ const partB = async () => {
     );
     // The app's own write must not trigger it again (docs/solutions/2026-10-12-enrich-on-change-loop-guard.md).
     await sleep(5_000);
-    const before = (await readCompany(useThisId))?.updatedAt;
+    const before = (await readCompany(useThisId)).updatedAt;
     await sleep(LOOP_GUARD_WAIT_MS);
-    const later = (await readCompany(useThisId))?.updatedAt;
-    check(before === later, 'B enrich-on-change does not re-trigger itself', `updatedAt ${before} → ${later}`);
+    const later = (await readCompany(useThisId)).updatedAt;
+    const isTime = (value: unknown) => typeof value === 'string' && !Number.isNaN(Date.parse(value));
+    check(
+      isTime(before) && isTime(later) && before === later,
+      'B enrich-on-change does not re-trigger itself',
+      `updatedAt ${before} → ${later}`,
+    );
   }
 
   // The widget's other routes, on one enriched Norwegian company.
@@ -527,7 +542,16 @@ const routeChecks = async (companyId: string) => {
   check(history.body?.ok === true, 'B financial-history reads the 5-year accounts', `HTTP ${history.status} ${short(history.body)}`);
 
   const domain = await route('POST', '/orakel/resolve-domain', { companyId });
-  check(domain.body?.ok === true, 'B resolve-domain sends the website for review', `HTTP ${domain.status} ${short(domain.body)}`);
+  // `ok` alone is also the answer when nothing was sent (sharing off): only `queued` proves it went to Orakel.
+  if (domain.body?.ok === true && domain.body.skipped === 'sharing-off') {
+    row('SKIP', 'B resolve-domain sends the website for review', 'website sharing is off in the app settings');
+  } else {
+    check(
+      domain.body?.ok === true && domain.body.queued === true,
+      'B resolve-domain sends the website for review',
+      `HTTP ${domain.status} ${short(domain.body)}`,
+    );
+  }
 
   const contacts = await route('POST', '/orakel/contacts', { companyId });
   const found = contacts.body?.contacts;
