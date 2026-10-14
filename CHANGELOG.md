@@ -21,6 +21,9 @@
   adds a note "Added from Orakel: <source>, <date>". It only creates people Orakel's card lists right now, so a
   suppressed person can't be created. "Find contacts" in the card header (`contacts`) opens a side panel with the
   website's emails and phones, each email with "+ Add", and a "No website" state.
+- Ownership tab ([ORA-121](https://linear.app/heiberg-industries/issue/ORA-121), [#7](https://github.com/Heiberg-Industries/orakel-twenty/pull/7)): shows the latest corporate
+  shareholder list with ownership percentages and the company's corporate group. The API key stays on the server;
+  shareholder and group lookups run only when the tab opens. Personal shareholders are excluded by the API default.
 - Live acceptance sweep ([ORA-124](https://linear.app/heiberg-industries/issue/ORA-124), [#6](https://github.com/Heiberg-Industries/orakel-twenty/pull/6)):
   `yarn tsx tests/live/app.live.mts` runs every logic function against a real Twenty and the real Orakel, checks
   that wrong or ambiguous matches are never written and real ones are at least suggested, and covers revoked and
