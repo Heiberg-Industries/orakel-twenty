@@ -28,13 +28,13 @@ export const fetchOwnership = async (
   fetchImpl?: OrakelFetch,
 ): Promise<OwnershipData> => {
   if (company.doNotEnrich) {
-    throw new Error('Orakel is turned off for this company ("Do not enrich").');
+    return unavailableOwnership('Orakel is turned off for this company.');
   }
   if (!company.orgNumber) {
-    throw new Error('This company has no org number yet.');
+    return unavailableOwnership('This company has no org number yet.');
   }
   if (detectCountry(company.orgNumber) !== 'NO') {
-    throw new Error('Ownership data is only available for Norwegian companies.');
+    return unavailableOwnership('Ownership data is only available for Norwegian companies.');
   }
 
   const org = encodeURIComponent(company.orgNumber);
@@ -53,7 +53,7 @@ export const fetchOwnership = async (
     ),
   ]);
 
-  const strings = (value: unknown) =>
+  const years = (value: unknown) =>
     Array.isArray(value) ? value.filter((item): item is number => typeof item === 'number') : [];
   const shareholders = shareholdersResult.ok
     ? {
@@ -64,7 +64,7 @@ export const fetchOwnership = async (
                 (typeof row.shareholderName === 'string' || row.shareholderName === null || row.shareholderName === undefined),
             )
           : [],
-        availableYears: strings(shareholdersResult.data.availableYears),
+        availableYears: years(shareholdersResult.data.availableYears),
       }
     : null;
   const group = groupResult.ok && groupResult.data.root
@@ -82,6 +82,14 @@ export const fetchOwnership = async (
     groupError: groupResult.ok ? null : orakelFailureMessage(groupResult),
   };
 };
+
+const unavailableOwnership = (unavailableMessage: string): OwnershipData => ({
+  shareholders: null,
+  group: null,
+  shareholdersError: null,
+  groupError: null,
+  unavailableMessage,
+});
 
 export const orakelFailureMessage = (failure: OrakelFailure): string => {
   switch (failure.kind) {

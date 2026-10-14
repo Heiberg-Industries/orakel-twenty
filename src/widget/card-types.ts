@@ -84,6 +84,7 @@ export type FinancialHistoryResult =
 export type ShareholderRow = {
   shareholderName?: string | null;
   shareholderOrgNumber?: string | null;
+  shareClass?: string | null;
   ownershipPct: number;
   year?: number;
 };
@@ -99,6 +100,7 @@ export type OwnershipData = {
   group: { root: OwnershipGroupNode; totalMembers: number; message?: string } | null;
   shareholdersError: string | null;
   groupError: string | null;
+  unavailableMessage?: string;
 };
 
 // `GET /api/companies/{org}/contacts`: what Orakel found on the company's own website, scraped

@@ -1,27 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Loader } from 'twenty-ui/primitives/feedback';
 
-import type { OwnershipData, OwnershipGroupNode, ShareholderRow } from 'src/widget/card-types';
+import type { OwnershipData } from 'src/widget/card-types';
+import { groupMembers, isNotInGroup, latestShareholders } from 'src/widget/ownership';
 import { styles } from 'src/widget/ui/styles';
 import { errorMessage, requestOwnership } from 'src/widget/ui/widget-api';
 
 type OwnershipTabProps = { companyId: string };
 type LoadState = { status: 'loading' } | { status: 'loaded'; data: OwnershipData } | { status: 'failed'; message: string };
-
-const latestShareholders = (rows: ShareholderRow[], years: number[]) => {
-  const latestYear = years.length > 0 ? Math.max(...years) : null;
-  return latestYear === null ? rows : rows.filter((row) => row.year === latestYear);
-};
-
-const groupMembers = (root: OwnershipGroupNode) => {
-  const members: { node: OwnershipGroupNode; depth: number }[] = [];
-  const visit = (node: OwnershipGroupNode, depth: number) => {
-    if (node.name.trim() !== '') members.push({ node, depth });
-    node.children.forEach((child) => visit(child, depth + 1));
-  };
-  visit(root, 0);
-  return members;
-};
 
 const Shareholders = ({ data, error }: { data: OwnershipData['shareholders']; error: string | null }) => {
   const rows = data ? latestShareholders(data.data, data.availableYears) : [];
@@ -32,13 +18,14 @@ const Shareholders = ({ data, error }: { data: OwnershipData['shareholders']; er
       {error ? (
         <p style={styles.error}>{error}</p>
       ) : rows.length === 0 ? (
-        <p style={styles.muted}>No shareholder data available.</p>
+        <p style={styles.muted}>No company shareholders on record. Personal shareholders are not shown.</p>
       ) : (
         <ul style={styles.plainList}>
           {rows.map((row, index) => (
             <li key={`${row.shareholderOrgNumber ?? row.shareholderName ?? 'shareholder'}-${index}`} style={styles.ownershipRow}>
               <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
                 {row.shareholderName?.trim() || row.shareholderOrgNumber || 'Unknown shareholder'}
+                {row.shareClass?.trim() ? ` (${row.shareClass.trim()})` : ''}
               </span>
               <span style={{ whiteSpace: 'nowrap' }}>{`${row.ownershipPct.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`}</span>
             </li>
@@ -51,14 +38,14 @@ const Shareholders = ({ data, error }: { data: OwnershipData['shareholders']; er
 
 const Group = ({ data, error }: { data: OwnershipData['group']; error: string | null }) => {
   const members = data ? groupMembers(data.root) : [];
-  const isNotInGroup = Boolean(data && data.totalMembers <= 1 && members.length <= 1);
+  const notInGroup = Boolean(data && isNotInGroup(data));
 
   return (
     <section style={styles.section}>
       <p style={styles.heading}>Corporate group</p>
       {error ? (
         <p style={styles.error}>{error}</p>
-      ) : isNotInGroup ? (
+      ) : notInGroup ? (
         <p style={styles.muted}>Not part of a corporate group.</p>
       ) : (
         <ul style={styles.plainList}>
@@ -101,6 +88,9 @@ export const OwnershipTab = ({ companyId }: OwnershipTabProps) => {
   }
   if (load.status === 'failed') {
     return <p style={styles.error}>{load.message}</p>;
+  }
+  if (load.data.unavailableMessage) {
+    return <p style={styles.muted}>{load.data.unavailableMessage}</p>;
   }
 
   return (
