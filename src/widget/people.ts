@@ -4,7 +4,8 @@ import type { OrakelSettings } from 'src/catalog/settings';
 import { normalizeDomain } from 'src/enrichment/enrich-company';
 import type { AddPersonResult, OrakelCompanyCard, PersonMatch } from 'src/widget/card-types';
 import { orakelFailureMessage } from 'src/widget/card-actions';
-import { callOrakel, type OrakelFetch } from 'src/widget/orakel-client';
+import { fetchCompanyCard } from 'src/widget/load-card';
+import type { OrakelFetch } from 'src/widget/orakel-client';
 import type { TwentyCompany } from 'src/widget/twenty-company';
 
 // "+ Add" in the Company widget: creates a Twenty Person linked to the company, as the person who
@@ -22,6 +23,9 @@ export type AddPersonInput = { name: string; force: boolean } | { email: string;
 
 export type AddPersonDeps = {
   client?: PeopleClient;
+  // A card the caller has just read for this company (`orakel-add-key-people` adds two people from
+  // one read). Without it, the card is read again here.
+  card?: OrakelCompanyCard;
   fetchImpl?: OrakelFetch;
   today?: () => Date;
 };
@@ -52,7 +56,7 @@ export const normalizeEmail = (value: unknown): string | null => {
   return EMAIL_PATTERN.test(email) ? email : null;
 };
 
-const normalizeName = (name: string) => name.normalize('NFKC').trim().replace(/\s+/g, ' ');
+export const normalizeName = (name: string) => name.normalize('NFKC').trim().replace(/\s+/g, ' ');
 
 // The people the card shows on the People tab, already without suppressed people.
 export const listedPeople = (card: OrakelCompanyCard) =>
@@ -176,12 +180,9 @@ export const addPerson = async (
     }
     // Re-read the card now, rather than trusting the name the widget sent: only someone Orakel
     // lists (and so has not suppressed) for this very company can be created.
-    const card = await callOrakel<OrakelCompanyCard>(
-      settings,
-      `/api/companies/${encodeURIComponent(company.orgNumber)}/card`,
-      {},
-      deps.fetchImpl,
-    );
+    const card = deps.card
+      ? ({ ok: true, data: deps.card } as const)
+      : await fetchCompanyCard(settings, company.orgNumber, deps.fetchImpl);
     if (!card.ok) {
       return { ok: false, message: orakelFailureMessage(card) };
     }

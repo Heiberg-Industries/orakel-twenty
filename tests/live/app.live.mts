@@ -27,18 +27,26 @@ import { checkOrakelKey } from '../../src/catalog/orakel-key-status';
 import { orakelFieldName } from '../../src/catalog/company-fields';
 import { readOrakelSettings } from '../../src/catalog/settings';
 import {
+  ADD_KEY_PEOPLE_ACTION_UNIVERSAL_IDENTIFIER,
   ADD_PERSON_FUNCTION_UNIVERSAL_IDENTIFIER,
   CARD_FUNCTION_UNIVERSAL_IDENTIFIER,
+  COMPANY_HEALTH_ACTION_UNIVERSAL_IDENTIFIER,
+  COMPANY_PROFILE_TOOL_UNIVERSAL_IDENTIFIER,
   CONTACTS_FUNCTION_UNIVERSAL_IDENTIFIER,
+  ENRICH_COMPANY_ACTION_UNIVERSAL_IDENTIFIER,
   ENRICH_ALL_UNIVERSAL_IDENTIFIER,
   ENRICH_ON_CHANGE_UNIVERSAL_IDENTIFIER,
   ENRICH_ON_CREATE_UNIVERSAL_IDENTIFIER,
+  FIND_MATCH_ACTION_UNIVERSAL_IDENTIFIER,
   FINANCIAL_HISTORY_FUNCTION_UNIVERSAL_IDENTIFIER,
   HEALTH_CHECK_UNIVERSAL_IDENTIFIER,
+  KEY_PEOPLE_TOOL_UNIVERSAL_IDENTIFIER,
   OWNERSHIP_FUNCTION_UNIVERSAL_IDENTIFIER,
+  OWNERSHIP_TOOL_UNIVERSAL_IDENTIFIER,
   REFRESH_FUNCTION_UNIVERSAL_IDENTIFIER,
   RESOLVE_DOMAIN_FUNCTION_UNIVERSAL_IDENTIFIER,
   SET_ORG_NUMBER_FUNCTION_UNIVERSAL_IDENTIFIER,
+  TENDERS_TOOL_UNIVERSAL_IDENTIFIER,
 } from '../../src/constants/universal-identifiers';
 import { DEFAULT_FIELD_SELECTION } from '../../src/catalog/settings';
 import { buttonState } from '../../src/enrichment/enrich-all';
@@ -340,6 +348,14 @@ const APP_FUNCTIONS: [string, string][] = [
   ['resolve-domain', RESOLVE_DOMAIN_FUNCTION_UNIVERSAL_IDENTIFIER],
   ['contacts', CONTACTS_FUNCTION_UNIVERSAL_IDENTIFIER],
   ['add-person', ADD_PERSON_FUNCTION_UNIVERSAL_IDENTIFIER],
+  ['orakel-enrich-company', ENRICH_COMPANY_ACTION_UNIVERSAL_IDENTIFIER],
+  ['orakel-company-health', COMPANY_HEALTH_ACTION_UNIVERSAL_IDENTIFIER],
+  ['orakel-add-key-people', ADD_KEY_PEOPLE_ACTION_UNIVERSAL_IDENTIFIER],
+  ['orakel-find-match', FIND_MATCH_ACTION_UNIVERSAL_IDENTIFIER],
+  ['orakel_company_profile', COMPANY_PROFILE_TOOL_UNIVERSAL_IDENTIFIER],
+  ['orakel_ownership', OWNERSHIP_TOOL_UNIVERSAL_IDENTIFIER],
+  ['orakel_key_people', KEY_PEOPLE_TOOL_UNIVERSAL_IDENTIFIER],
+  ['orakel_tenders', TENDERS_TOOL_UNIVERSAL_IDENTIFIER],
 ];
 
 const preflight = async () => {
@@ -348,7 +364,7 @@ const preflight = async () => {
     functionIds.set(fn.universalIdentifier, fn.id);
   }
   const missing = APP_FUNCTIONS.filter(([, uid]) => !functionIds.has(uid)).map(([name]) => name);
-  check(missing.length === 0, 'B app installed with all 12 functions', missing.length ? `missing: ${missing.join(', ')}` : '');
+  check(missing.length === 0, `B app installed with all ${APP_FUNCTIONS.length} functions`, missing.length ? `missing: ${missing.join(', ')}` : '');
   return missing.length === 0;
 };
 
@@ -639,6 +655,47 @@ const routeChecks = async (companyId: string) => {
     'B + Add by email again finds the duplicate',
     short(emailAgain.reply.body),
   );
+
+  await automationChecks(companyId, state.card.overview.orgNumber, listedName);
+};
+
+// Workflow actions and AI tools (ORA-122), run as Twenty runs them: with the step's input or the tool's arguments.
+const automationChecks = async (companyId: string, orgNumber: string, alreadyAdded: string | null) => {
+  const match = await execFunction(FIND_MATCH_ACTION_UNIVERSAL_IDENTIFIER, { companyId });
+  check(match.data?.found === true && match.data?.orgNumber === orgNumber, 'B orakel-find-match returns the org number', short(match.data ?? match.error));
+
+  const health = await execFunction(COMPANY_HEALTH_ACTION_UNIVERSAL_IDENTIFIER, { companyId });
+  check(health.data?.ok === true && ['active', 'bankrupt', 'being-dissolved'].includes(health.data?.status), 'B orakel-company-health returns a status', short(health.data ?? health.error));
+
+  const enrich = await execFunction(ENRICH_COMPANY_ACTION_UNIVERSAL_IDENTIFIER, { companyId });
+  check(enrich.data?.ok === true && ['enriched', 'unchanged'].includes(enrich.data?.outcome), 'B orakel-enrich-company re-enriches', short(enrich.data ?? enrich.error));
+
+  const keyPeople = await execFunction(ADD_KEY_PEOPLE_ACTION_UNIVERSAL_IDENTIFIER, { companyId });
+  const added = (keyPeople.data?.added ?? []) as { personId: string }[];
+  created.people.push(...added.map((person) => person.personId));
+  for (const person of added) created.notes.push(...(await notesOf(person.personId)).map((note) => note.id).filter(Boolean));
+  check(keyPeople.data?.ok === true, 'B orakel-add-key-people runs', short(keyPeople.data ?? keyPeople.error));
+  if (alreadyAdded) {
+    const skipped = (keyPeople.data?.skipped ?? []) as { name: string | null; reason: string }[];
+    check(skipped.some((skip) => skip.name === alreadyAdded && skip.reason === 'duplicate'), `B orakel-add-key-people skips ${alreadyAdded}, added earlier`, short(skipped));
+  }
+  const again = await execFunction(ADD_KEY_PEOPLE_ACTION_UNIVERSAL_IDENTIFIER, { companyId });
+  check(again.data?.ok === true && again.data?.addedCount === 0, 'B orakel-add-key-people a second time adds nobody', short(again.data ?? again.error));
+
+  const tools: [string, string][] = [
+    ['orakel_company_profile', COMPANY_PROFILE_TOOL_UNIVERSAL_IDENTIFIER],
+    ['orakel_ownership', OWNERSHIP_TOOL_UNIVERSAL_IDENTIFIER],
+    ['orakel_key_people', KEY_PEOPLE_TOOL_UNIVERSAL_IDENTIFIER],
+    ['orakel_tenders', TENDERS_TOOL_UNIVERSAL_IDENTIFIER],
+  ];
+  const before = (await readCompany(companyId)).updatedAt;
+  for (const [name, uid] of tools) {
+    const byId = await execFunction(uid, { companyId });
+    check(byId.data?.ok === true && byId.data?.orgNumber === orgNumber, `B AI tool ${name} answers for the company`, short(byId.data ?? byId.error));
+    const byOrg = await execFunction(uid, { orgNumber });
+    check(byOrg.data?.ok === true, `B AI tool ${name} answers for an org number`, short(byOrg.data ?? byOrg.error));
+  }
+  check((await readCompany(companyId)).updatedAt === before, 'B AI tools leave the company untouched', '');
 };
 
 // ── Run ──────────────────────────────────────────────────────────────────────────────────────────
