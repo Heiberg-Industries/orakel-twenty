@@ -80,6 +80,19 @@ export const styles = {
     gap: 8,
     minWidth: 0,
   },
+  ownershipRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: 12,
+    padding: '5px 0',
+    borderBottom: `1px solid ${colors.border}`,
+    minWidth: 0,
+  },
+  plainList: {
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+  },
   duplicateBox: {
     display: 'flex',
     flexDirection: 'column',

@@ -81,6 +81,28 @@ export type FinancialHistoryResult =
   | { ok: true; extractedYears: number }
   | { ok: false; message: string };
 
+export type ShareholderRow = {
+  shareholderName?: string | null;
+  shareholderOrgNumber?: string | null;
+  shareClass?: string | null;
+  ownershipPct: number;
+  year?: number;
+};
+
+export type OwnershipGroupNode = {
+  orgNumber: string;
+  name: string;
+  children: OwnershipGroupNode[];
+};
+
+export type OwnershipData = {
+  shareholders: { data: ShareholderRow[]; availableYears: number[] } | null;
+  group: { root: OwnershipGroupNode; totalMembers: number; message?: string } | null;
+  shareholdersError: string | null;
+  groupError: string | null;
+  unavailableMessage?: string;
+};
+
 // `GET /api/companies/{org}/contacts`: what Orakel found on the company's own website, scraped
 // once, on this click. Norwegian companies only; `noWebsite` when Orakel knows no website for it.
 export type OrakelContacts = { emails: string[]; phones: string[]; noWebsite?: boolean };

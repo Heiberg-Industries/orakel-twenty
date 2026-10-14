@@ -2,9 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { OrakelSettings } from 'src/catalog/settings';
 import type { OrakelCompanyCard } from 'src/widget/card-types';
-import { fetchFinancialHistory, proposeCrmDomain } from 'src/widget/card-actions';
+import { fetchFinancialHistory, fetchOwnership, proposeCrmDomain } from 'src/widget/card-actions';
 import { addressLine, financialColumns, formatMillions, foundingYear, websiteView } from 'src/widget/format';
 import { loadCardState } from 'src/widget/load-card';
+import { isNotInGroup, latestShareholders } from 'src/widget/ownership';
 import { callOrakel, type OrakelFetch } from 'src/widget/orakel-client';
 import { cleanOrgNumber } from 'src/widget/org-number';
 import { refreshCompany } from 'src/widget/refresh';
@@ -195,6 +196,90 @@ describe('loadCardState: the widget states', () => {
 });
 
 describe('card actions', () => {
+  it('ownership: unsupported companies are explained without calling Orakel', async () => {
+    const { calls, fetchImpl } = fakeOrakel();
+
+    await expect(fetchOwnership(company({ orgNumber: '5560000000' }), settings(), fetchImpl)).resolves.toMatchObject({
+      unavailableMessage: 'Ownership data is only available for Norwegian companies.',
+    });
+    await expect(fetchOwnership(company({ doNotEnrich: true }), settings(), fetchImpl)).resolves.toMatchObject({
+      unavailableMessage: 'Orakel is turned off for this company.',
+    });
+    expect(calls).toEqual([]);
+  });
+
+  it('ownership: keeps only the latest shareholder year', () => {
+    expect(
+      latestShareholders(
+        [
+          { shareholderName: 'Older Owner AS', ownershipPct: 25, year: 2022 },
+          { shareholderName: 'Latest Owner AS', ownershipPct: 40, year: 2023 },
+        ],
+        [2022, 2023],
+      ),
+    ).toEqual([{ shareholderName: 'Latest Owner AS', ownershipPct: 40, year: 2023 }]);
+  });
+
+  it('ownership: recognizes Orakel’s single-member response as not in a group', () => {
+    expect(
+      isNotInGroup({
+        root: { orgNumber: '923609016', name: '', children: [] },
+        totalMembers: 1,
+      }),
+    ).toBe(true);
+    expect(
+      isNotInGroup({
+        root: { orgNumber: '923609016', name: 'Company AS', children: [{ orgNumber: '923609017', name: 'Subsidiary AS', children: [] }] },
+        totalMembers: 2,
+      }),
+    ).toBe(false);
+  });
+
+  it('ownership: filters malformed rows and non-numeric years from Orakel responses', async () => {
+    const { fetchImpl } = fakeOrakel(
+      {
+        status: 200,
+        body: {
+          data: [
+            { shareholderName: 'Owner AS', ownershipPct: 55, year: 2023, shareClass: 'A' },
+            { shareholderName: 'Incomplete owner', year: 2023 },
+          ],
+          availableYears: [2023, '2022'],
+        },
+      },
+      { status: 200, body: { root: { orgNumber: '923609016', name: 'Company AS', children: [] }, totalMembers: 2 } },
+    );
+
+    await expect(fetchOwnership(company(), settings(), fetchImpl)).resolves.toMatchObject({
+      shareholders: {
+        data: [{ shareholderName: 'Owner AS', ownershipPct: 55, year: 2023, shareClass: 'A' }],
+        availableYears: [2023],
+      },
+      shareholdersError: null,
+    });
+  });
+
+  it('ownership: reports one failed endpoint while returning the other result', async () => {
+    const { calls, fetchImpl } = fakeOrakel(
+      { status: 429, body: { error: 'Shareholder quota exceeded' } },
+      {
+        status: 200,
+        body: {
+          root: { orgNumber: '923609016', name: 'Equinor ASA', children: [] },
+          totalMembers: 2,
+        },
+      },
+    );
+
+    await expect(fetchOwnership(company(), settings(), fetchImpl)).resolves.toMatchObject({
+      shareholders: null,
+      shareholdersError: 'Shareholder quota exceeded',
+      group: { root: { name: 'Equinor ASA' }, totalMembers: 2 },
+      groupError: null,
+    });
+    expect(calls).toHaveLength(2);
+  });
+
   it('financial history: one blocking POST, Norwegian companies only', async () => {
     const { calls, fetchImpl } = fakeOrakel({ status: 200, body: { syncResult: { years: [2021, 2022, 2023] } } });
 

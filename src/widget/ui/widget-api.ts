@@ -6,6 +6,7 @@ import type {
   CardState,
   ContactsResult,
   FinancialHistoryResult,
+  OwnershipData,
   ResolveDomainResult,
   SetOrgNumberResult,
 } from 'src/widget/card-types';
@@ -33,6 +34,8 @@ export const setOrgNumber = (companyId: string, orgNumber: string) =>
 
 export const requestFinancialHistory = (companyId: string) =>
   client().post<FinancialHistoryResult>('/s/orakel/financial-history', { companyId });
+
+export const requestOwnership = (companyId: string) => client().post<OwnershipData>('/s/orakel/ownership', { companyId });
 
 export const findContacts = (companyId: string) =>
   client().post<ContactsResult>('/s/orakel/contacts', { companyId });

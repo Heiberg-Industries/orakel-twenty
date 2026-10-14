@@ -35,6 +35,7 @@ import {
   ENRICH_ON_CREATE_UNIVERSAL_IDENTIFIER,
   FINANCIAL_HISTORY_FUNCTION_UNIVERSAL_IDENTIFIER,
   HEALTH_CHECK_UNIVERSAL_IDENTIFIER,
+  OWNERSHIP_FUNCTION_UNIVERSAL_IDENTIFIER,
   REFRESH_FUNCTION_UNIVERSAL_IDENTIFIER,
   RESOLVE_DOMAIN_FUNCTION_UNIVERSAL_IDENTIFIER,
   SET_ORG_NUMBER_FUNCTION_UNIVERSAL_IDENTIFIER,
@@ -335,6 +336,7 @@ const APP_FUNCTIONS: [string, string][] = [
   ['set-org-number', SET_ORG_NUMBER_FUNCTION_UNIVERSAL_IDENTIFIER],
   ['refresh', REFRESH_FUNCTION_UNIVERSAL_IDENTIFIER],
   ['financial-history', FINANCIAL_HISTORY_FUNCTION_UNIVERSAL_IDENTIFIER],
+  ['ownership', OWNERSHIP_FUNCTION_UNIVERSAL_IDENTIFIER],
   ['resolve-domain', RESOLVE_DOMAIN_FUNCTION_UNIVERSAL_IDENTIFIER],
   ['contacts', CONTACTS_FUNCTION_UNIVERSAL_IDENTIFIER],
   ['add-person', ADD_PERSON_FUNCTION_UNIVERSAL_IDENTIFIER],
@@ -346,7 +348,7 @@ const preflight = async () => {
     functionIds.set(fn.universalIdentifier, fn.id);
   }
   const missing = APP_FUNCTIONS.filter(([, uid]) => !functionIds.has(uid)).map(([name]) => name);
-  check(missing.length === 0, 'B app installed with all 11 functions', missing.length ? `missing: ${missing.join(', ')}` : '');
+  check(missing.length === 0, 'B app installed with all 12 functions', missing.length ? `missing: ${missing.join(', ')}` : '');
   return missing.length === 0;
 };
 
@@ -567,6 +569,17 @@ const routeChecks = async (companyId: string) => {
 
   const history = await route('POST', '/orakel/financial-history', { companyId });
   check(history.body?.ok === true, 'B financial-history reads the 5-year accounts', `HTTP ${history.status} ${short(history.body)}`);
+
+  const ownership = await route('POST', '/orakel/ownership', { companyId });
+  check(
+    ownership.status === 200 &&
+      ownership.body?.shareholdersError === null &&
+      ownership.body?.groupError === null &&
+      Array.isArray(ownership.body?.shareholders?.data) &&
+      !!ownership.body?.group?.root,
+    'B ownership loads shareholders and corporate group',
+    `HTTP ${ownership.status} ${short(ownership.body)}`,
+  );
 
   const domain = await route('POST', '/orakel/resolve-domain', { companyId });
   // `ok` alone is also the answer when nothing was sent (sharing off): only `queued` proves it went to Orakel.
