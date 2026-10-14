@@ -26,6 +26,18 @@ Nordic company data from [Orakel](https://orakel.cloud) on every company in your
   <source>, <date>". People who asked Orakel to hide them are never shown and can't be added.
 - **Find contacts** in the card header (Norwegian companies): reads the company's own website once, when you click,
   and lists the email addresses and phone numbers on it, each address with *+ Add*.
+- **Workflow actions** (Workflows → add a step → *Orakel: …*), each taking a company ID such as
+  `{{trigger.object.id}}`:
+  - *Orakel: find match* returns the org number, name and confidence of Orakel's best match. It writes nothing; add
+    an *Update record* step if you want to set the org number, for example when the confidence is 0.95 or more.
+  - *Orakel: company health* returns active / bankrupt / being dissolved and the latest revenue and result.
+  - *Orakel: enrich company* fills the selected Orakel fields on the company, as Refresh does.
+  - *Orakel: add key people* creates the CEO and board chair as people on the company, as *+ Add* does. It skips
+    people Twenty already has and people who asked Orakel to hide them.
+- **Tools for Twenty's AI** (and for AI assistants connected to Twenty's MCP server), read-only:
+  `orakel_company_profile`, `orakel_ownership`, `orakel_key_people`, `orakel_tenders` (listed in Twenty as
+  `app_orakel_…`). Each takes a Twenty company ID or an org number. Website contact scraping is not available to
+  workflows or AI; it stays a button a person clicks.
 
 ## Settings
 
