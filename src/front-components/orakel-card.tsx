@@ -9,6 +9,7 @@ import type { CardState } from 'src/widget/card-types';
 import { FinancialsTab } from 'src/widget/ui/FinancialsTab';
 import { MatchSuggestions } from 'src/widget/ui/MatchSuggestions';
 import { OverviewTab } from 'src/widget/ui/OverviewTab';
+import { OwnershipTab } from 'src/widget/ui/OwnershipTab';
 import { PeopleTab } from 'src/widget/ui/PeopleTab';
 import { styles } from 'src/widget/ui/styles';
 import { errorMessage, fetchCard } from 'src/widget/ui/widget-api';
@@ -19,12 +20,13 @@ import { errorMessage, fetchCard } from 'src/widget/ui/widget-api';
 
 type LoadState = { status: 'loading' } | { status: 'loaded'; card: CardState } | { status: 'failed'; message: string };
 
-type Tab = 'overview' | 'financials' | 'people';
+type Tab = 'overview' | 'financials' | 'people' | 'ownership';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'financials', label: 'Financials' },
   { id: 'people', label: 'People' },
+  { id: 'ownership', label: 'Ownership' },
 ];
 
 const openAppSettings = () => navigate(AppPath.SettingsCatchAll, { '*': 'applications' });
@@ -192,8 +194,10 @@ const OrakelCard = () => {
               />
             ) : tab === 'financials' ? (
               <FinancialsTab companyId={companyId} card={card.card} onHistoryLoaded={() => void reload()} />
-            ) : (
+            ) : tab === 'people' ? (
               <PeopleTab key={card.card.overview.orgNumber} companyId={companyId} intelligence={card.card.intelligence} />
+            ) : (
+              <OwnershipTab key={card.card.overview.orgNumber} companyId={companyId} />
             )}
           </>
         );

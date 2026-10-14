@@ -4,8 +4,11 @@ import { detectCountry } from 'src/enrichment/orakel-api';
 import type {
   ContactsResult,
   FinancialHistoryResult,
+  OwnershipData,
+  OwnershipGroupNode,
   OrakelContacts,
   ResolveDomainResult,
+  ShareholderRow,
 } from 'src/widget/card-types';
 import { callOrakel, type OrakelFailure, type OrakelFetch } from 'src/widget/orakel-client';
 import type { TwentyCompany } from 'src/widget/twenty-company';
@@ -18,6 +21,67 @@ import type { TwentyCompany } from 'src/widget/twenty-company';
 // annual-report PDFs (about 45 s on the first call; later calls skip years already read). Orakel
 // sets no timeout of its own and Twenty adds none to an app route (spec §9 #9), so this waits for it.
 export const FINANCIAL_HISTORY_TIMEOUT_MS = 170_000;
+
+export const fetchOwnership = async (
+  company: TwentyCompany,
+  settings: OrakelSettings,
+  fetchImpl?: OrakelFetch,
+): Promise<OwnershipData> => {
+  if (company.doNotEnrich) {
+    throw new Error('Orakel is turned off for this company ("Do not enrich").');
+  }
+  if (!company.orgNumber) {
+    throw new Error('This company has no org number yet.');
+  }
+  if (detectCountry(company.orgNumber) !== 'NO') {
+    throw new Error('Ownership data is only available for Norwegian companies.');
+  }
+
+  const org = encodeURIComponent(company.orgNumber);
+  const [shareholdersResult, groupResult] = await Promise.all([
+    callOrakel<{ data?: ShareholderRow[]; availableYears?: number[] }>(
+      settings,
+      `/api/companies/${org}/shareholders`,
+      {},
+      fetchImpl,
+    ),
+    callOrakel<{ root?: OwnershipGroupNode; totalMembers?: number; message?: string }>(
+      settings,
+      `/api/companies/${org}/group`,
+      {},
+      fetchImpl,
+    ),
+  ]);
+
+  const strings = (value: unknown) =>
+    Array.isArray(value) ? value.filter((item): item is number => typeof item === 'number') : [];
+  const shareholders = shareholdersResult.ok
+    ? {
+        data: Array.isArray(shareholdersResult.data.data)
+          ? shareholdersResult.data.data.filter(
+              (row): row is ShareholderRow =>
+                typeof row?.ownershipPct === 'number' &&
+                (typeof row.shareholderName === 'string' || row.shareholderName === null || row.shareholderName === undefined),
+            )
+          : [],
+        availableYears: strings(shareholdersResult.data.availableYears),
+      }
+    : null;
+  const group = groupResult.ok && groupResult.data.root
+    ? {
+        root: groupResult.data.root,
+        totalMembers: typeof groupResult.data.totalMembers === 'number' ? groupResult.data.totalMembers : 1,
+        message: typeof groupResult.data.message === 'string' ? groupResult.data.message : undefined,
+      }
+    : null;
+
+  return {
+    shareholders,
+    group,
+    shareholdersError: shareholdersResult.ok ? null : orakelFailureMessage(shareholdersResult),
+    groupError: groupResult.ok ? null : orakelFailureMessage(groupResult),
+  };
+};
 
 export const orakelFailureMessage = (failure: OrakelFailure): string => {
   switch (failure.kind) {
