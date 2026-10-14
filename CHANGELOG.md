@@ -24,7 +24,7 @@
 - Ownership tab ([ORA-121](https://linear.app/heiberg-industries/issue/ORA-121), [#7](https://github.com/Heiberg-Industries/orakel-twenty/pull/7)): shows the latest corporate
   shareholder list with ownership percentages and the company's corporate group. The API key stays on the server;
   shareholder and group lookups run only when the tab opens. Personal shareholders are excluded by the API default.
-- Orakel in Twenty workflows and Twenty AI ([ORA-122](https://linear.app/heiberg-industries/issue/ORA-122)): four
+- Orakel in Twenty workflows and Twenty AI ([ORA-122](https://linear.app/heiberg-industries/issue/ORA-122), [#8](https://github.com/Heiberg-Industries/orakel-twenty/pull/8)): four
   workflow actions (`orakel-find-match`, `orakel-company-health`, `orakel-enrich-company`, `orakel-add-key-people`)
   and four read-only AI tools (`orakel_company_profile`, `orakel_ownership`, `orakel_key_people`, `orakel_tenders`).
   The actions reuse Refresh and "+ Add"; key people skips duplicates and suppressed roles and adds the source note.
