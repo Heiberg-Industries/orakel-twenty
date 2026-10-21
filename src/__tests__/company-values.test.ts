@@ -46,13 +46,16 @@ describe('Orakel values per slug (port of buildEnrichmentValues)', () => {
     ).toBe(3);
   });
 
-  it('computes owners from the latest year, with bigint shares sent as strings', () => {
+  it("computes owners from Orakel's ownership summary", () => {
     const company = orakelCompany({
-      shareholders: [
-        { shareholderName: 'Old Holding AS', shareholderType: 'company', shareCount: 100, year: 2023 },
-        { shareholderName: 'Holding AS', shareholderType: 'company', shareCount: '9007199254740993', totalSharesInCompany: '12009599006321324', year: 2024 },
-        { shareholderName: 'Ola Nordmann', shareholderType: 'person', shareCount: '3002399751580331', totalSharesInCompany: '12009599006321324', year: 2024 },
-      ],
+      ownership: {
+        year: 2024,
+        holderCount: 2,
+        topHolders: [
+          { name: 'Holding AS', orgNumber: '100000002', kind: 'company', pct: 75 },
+          { name: 'Ola Nordmann', orgNumber: null, kind: 'person', pct: 25 },
+        ],
+      },
     });
     const values = buildEnrichmentValues(company, ['isSubsidiary', 'parentCompanyName', 'majorityOwner', 'largestShareholder']);
 

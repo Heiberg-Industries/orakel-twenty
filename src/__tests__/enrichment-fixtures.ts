@@ -30,7 +30,7 @@ export const orakelCompany = (overrides: Partial<OrakelCompany> = {}): OrakelCom
     { roleTypeCode: 'DAGL', roleGroupCode: 'DAGL', personFirstName: 'Bendik', personLastName: 'Heiberg' },
     { roleTypeCode: 'LEDE', roleGroupCode: 'STYR', personFirstName: 'Kari', personMiddleName: 'M', personLastName: 'Nordmann' },
   ],
-  shareholders: [],
+  ownership: null,
   ...overrides,
 });
 

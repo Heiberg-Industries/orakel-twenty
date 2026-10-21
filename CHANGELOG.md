@@ -33,6 +33,9 @@
   `yarn tsx tests/live/app.live.mts` runs every logic function against a real Twenty and the real Orakel, checks
   that wrong or ambiguous matches are never written and real ones are at least suggested, and covers revoked and
   expired-trial keys. Run by hand, never in `yarn test`. Adds `tsx` as a dev dependency.
+- Ownership fields from Orakel's summary ([ORA-256](https://linear.app/heiberg-industries/issue/ORA-256)): majority
+  owner, largest shareholder, subsidiary and parent company now read `ownership.topHolders` (the ten largest
+  holders of the latest year). Orakel's company lookup and batch enrich no longer return the raw `shareholders` list.
 
 ## 0.1.0
 
