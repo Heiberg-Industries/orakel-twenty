@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0
 
 - Auto-enrichment ([ORA-118](https://linear.app/heiberg-industries/issue/ORA-118), [#3](https://github.com/Heiberg-Industries/orakel-twenty/pull/3)): `enrich-on-create` and `enrich-on-change` fill the selected `orakel*` fields when a
   company is created or gets an org number or domain. Auto-match only at a single ≥0.95 candidate. Built-ins
