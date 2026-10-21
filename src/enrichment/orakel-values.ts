@@ -4,7 +4,7 @@
 // origin/main @ a1441e7a), rewritten over the public API's JSON instead of Orakel's database row.
 // The same rows arrive from `GET /api/companies/{org}` and from each item of
 // `POST /api/companies/enrich`: `financials` (all rows), `roles` (not resigned, by sortOrder) and
-// `shareholders` (all years). BigInt columns arrive as a number, or a string above 2^53.
+// `ownership` (the ten largest holders of the latest year, from Orakel's shareholder summary).
 
 export type OrakelFinancialRow = {
   periodTo?: string | null;
@@ -27,12 +27,17 @@ export type OrakelRole = {
   entityOrgNumber?: string | null;
 };
 
-export type OrakelShareholder = {
-  shareholderName: string;
-  shareholderType?: string | null;
-  shareCount?: number | string | null;
-  totalSharesInCompany?: number | string | null;
+export type OrakelTopHolder = {
+  name: string;
+  orgNumber?: string | null;
+  kind: string; // person | company | foreign
+  pct: number;
+};
+
+export type OrakelOwnership = {
   year: number;
+  holderCount: number;
+  topHolders: OrakelTopHolder[];
 };
 
 export type OrakelCompany = {
@@ -57,7 +62,7 @@ export type OrakelCompany = {
   updatedAt?: string | null;
   financials?: OrakelFinancialRow[] | null;
   roles?: OrakelRole[] | null;
-  shareholders?: OrakelShareholder[] | null;
+  ownership?: OrakelOwnership | null;
 };
 
 // From `GET /api/companies/{org}/card` (`intelligence`). Not in the company profile.
@@ -107,31 +112,16 @@ export const keyPeople = (roles: OrakelRole[] | null | undefined) => {
   };
 };
 
-const toBigInt = (value: number | string | null | undefined) => {
-  try {
-    return BigInt(String(value ?? 0).split('.')[0] || '0');
-  } catch {
-    return 0n;
-  }
-};
-
-// Shareholders of the latest year, each with Orakel's percentage (bigint division, 2 decimals).
-const latestYearOwnership = (shareholders: OrakelShareholder[] | null | undefined) => {
-  if (!shareholders || shareholders.length === 0) return [];
-  const latestYear = Math.max(...shareholders.map((holder) => holder.year));
-  const yearData = shareholders.filter((holder) => holder.year === latestYear);
-  const totalShares = yearData.reduce((sum, holder) => sum + toBigInt(holder.shareCount), 0n);
-
-  return yearData.map((holder) => {
-    const denominator =
-      holder.totalSharesInCompany == null ? totalShares : toBigInt(holder.totalSharesInCompany);
-    const pct = denominator > 0n ? Number((toBigInt(holder.shareCount) * 10000n) / denominator) / 100 : 0;
-    return { name: holder.shareholderName, isPerson: holder.shareholderType === 'person', pct };
-  });
-};
+// The ten largest holders are enough here: a majority owner or the largest holder is always among them.
+const latestYearOwnership = (ownership: OrakelOwnership | null | undefined) =>
+  (ownership?.topHolders ?? []).map((holder) => ({
+    name: holder.name,
+    isPerson: holder.kind === 'person',
+    pct: holder.pct,
+  }));
 
 const topHolder = (company: OrakelCompany) => {
-  const holders = latestYearOwnership(company.shareholders);
+  const holders = latestYearOwnership(company.ownership);
   return holders.length === 0 ? null : holders.reduce((a, b) => (a.pct > b.pct ? a : b));
 };
 
@@ -169,13 +159,13 @@ export const SLUG_TO_VALUE_FN: Record<string, ValueFn> = {
   latestTenderUrl: (_c, extra) => extra.latestTenderUrl,
   isSubsidiary: (c) => {
     if (c.parentOrgNumber != null) return true;
-    return latestYearOwnership(c.shareholders).some((holder) => !holder.isPerson && holder.pct >= 50);
+    return latestYearOwnership(c.ownership).some((holder) => !holder.isPerson && holder.pct >= 50);
   },
   parentCompanyName: (c) => {
     if (c.parentCompanyName != null) return c.parentCompanyName;
     if (c.parentOrgNumber) return c.parentOrgNumber;
     let best: { name: string; pct: number } | null = null;
-    for (const holder of latestYearOwnership(c.shareholders)) {
+    for (const holder of latestYearOwnership(c.ownership)) {
       if (!holder.isPerson && holder.pct >= 50 && holder.pct > (best?.pct ?? 0)) best = holder;
     }
     return best?.name ?? null;
