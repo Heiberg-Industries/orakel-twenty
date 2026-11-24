@@ -12,6 +12,9 @@ export const colors = {
   danger: token('font-color-danger', '#d33'),
   border: token('border-color-light', '#eee'),
   backgroundSecondary: token('background-secondary', '#fafafa'),
+  // Orakel's amber (#B87333), the card's one accent. Not themed: Twenty's theme has no amber. Only for
+  // marks and rules, never text: 3.79:1 on white is enough for a rule (3:1), not for small text (4.5:1).
+  accent: '#B87333',
 };
 
 export const fontSize = {
@@ -39,7 +42,7 @@ export const styles = {
   tab: (active: boolean): CSSProperties => ({
     background: 'none',
     border: 'none',
-    borderBottom: `2px solid ${active ? colors.primary : 'transparent'}`,
+    borderBottom: `2px solid ${active ? colors.accent : 'transparent'}`,
     color: active ? colors.primary : colors.secondary,
     cursor: 'pointer',
     font: 'inherit',
@@ -47,6 +50,7 @@ export const styles = {
     padding: '6px 8px',
     marginBottom: -1,
   }),
+  mark: { marginLeft: 'auto', alignSelf: 'center', flexShrink: 0, color: colors.primary },
   // Label / value rows that wrap to one column when the widget is narrow.
   list: {
     display: 'grid',
