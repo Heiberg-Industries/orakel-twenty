@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1
+
+- Orakel branding: the app logo is the Orakel «o.» mark (`public/logo.svg`, set as `logo` in `defineApplication`),
+  shown in Settings, the marketplace and on the card's command buttons. The card's active tab underline is
+  Orakel amber, and a small «o.» mark sits at the end of the tab row. Amber is used for marks and rules only,
+  never text; Twenty's own buttons keep Twenty's colours.
+
 ## 0.2.0
 
 - Auto-enrichment ([ORA-118](https://linear.app/heiberg-industries/issue/ORA-118), [#3](https://github.com/Heiberg-Industries/orakel-twenty/pull/3)): `enrich-on-create` and `enrich-on-change` fill the selected `orakel*` fields when a

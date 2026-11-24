@@ -11,7 +11,7 @@ import { MatchSuggestions } from 'src/widget/ui/MatchSuggestions';
 import { OverviewTab } from 'src/widget/ui/OverviewTab';
 import { OwnershipTab } from 'src/widget/ui/OwnershipTab';
 import { PeopleTab } from 'src/widget/ui/PeopleTab';
-import { styles } from 'src/widget/ui/styles';
+import { colors, styles } from 'src/widget/ui/styles';
 import { errorMessage, fetchCard } from 'src/widget/ui/widget-api';
 
 // The Orakel card on the Company page: a port of the HubSpot card (orakel
@@ -50,6 +50,18 @@ const ExternalLink = ({ href, children }: { href: string; children: React.ReactN
   <a href={href} target="_blank" rel="noreferrer" style={styles.link}>
     {children}
   </a>
+);
+
+// The «o.» mark from public/logo.svg without its tile: the «o» takes the text colour, so it follows
+// light and dark mode; the dot is always amber.
+const OrakelMark = () => (
+  <svg viewBox="12 20 56 40" width={20} height={14} style={styles.mark} aria-hidden="true">
+    <path
+      fill="currentColor"
+      d="M31.8 55.7Q34.9 55.7 37.3 54.2Q39.7 52.7 41 49.5Q42.3 46.3 42.3 41.3Q42.3 35.7 41.1 31.9Q39.8 28.2 37.4 26.2Q35 24.3 31.6 24.3Q28.5 24.3 26.2 25.8Q23.8 27.3 22.4 30.5Q21.1 33.7 21.1 38.8Q21.1 44.3 22.4 48.1Q23.7 51.9 26.1 53.8Q28.5 55.7 31.8 55.7ZM31.5 60Q25.6 60 21.2 57.5Q16.8 55.1 14.4 50.6Q12 46.2 12 40.4Q12 34.4 14.5 29.8Q17.1 25.2 21.6 22.6Q26.1 20 32 20Q37.9 20 42.3 22.5Q46.7 25 49.1 29.4Q51.5 33.8 51.5 39.6Q51.5 45.6 49 50.2Q46.4 54.8 41.9 57.4Q37.4 60 31.5 60Z"
+    />
+    <circle cx="61.5" cy="53.5" r="6.5" fill={colors.accent} />
+  </svg>
 );
 
 const OrakelCard = () => {
@@ -182,6 +194,7 @@ const OrakelCard = () => {
                   {label}
                 </button>
               ))}
+              <OrakelMark />
             </div>
             {tab === 'overview' ? (
               <OverviewTab

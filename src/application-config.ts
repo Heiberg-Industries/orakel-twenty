@@ -23,6 +23,8 @@ export default defineApplication({
   description: APP_DESCRIPTION,
   author: 'Heiberg Industries',
   category: 'Enrichment',
+  // The Orakel «o.» mark. A path in public/; the SDK ignores external URLs here.
+  logo: 'public/logo.svg',
   websiteUrl: 'https://orakel.cloud',
   issueReportUrl: 'https://github.com/Heiberg-Industries/orakel-twenty/issues',
   applicationVariables: {
